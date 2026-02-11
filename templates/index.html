@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Příležitosti | Cocuma Job Searcher</title>
+  <style>
+    :root {
+      --text: #1a1a1a;
+      --muted: #666;
+      --border: #e0e0e0;
+      --primary: #000;
+      --card-bg: #fff;
+      --accent: #0066cc;
+    }
+    * { box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; color: var(--text); background: #f5f5f5; }
+    .header { background: var(--card-bg); border-bottom: 1px solid var(--border); padding: 1rem 1.5rem; }
+    .header h1 { margin: 0 0 1rem; font-size: 1.25rem; font-weight: 600; }
+    .count { font-weight: 600; margin-bottom: 0.5rem; }
+    .search-row { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem; }
+    .search-row input[type="text"] { flex: 1; min-width: 200px; padding: 0.5rem 0.75rem; border: 1px solid var(--border); border-radius: 4px; font-size: 1rem; }
+    .search-row button { padding: 0.5rem 1.25rem; background: var(--primary); color: #fff; border: none; border-radius: 4px; font-weight: 600; cursor: pointer; font-size: 0.875rem; }
+    .search-row button:hover { background: #333; }
+    .refresh-wrap { margin-top: 0.75rem; }
+    .last-update { color: var(--muted); font-size: 0.875rem; }
+    .refresh-wrap a { color: var(--accent); text-decoration: none; font-size: 0.875rem; }
+    .refresh-wrap a:hover { text-decoration: underline; }
+    .main { max-width: 1100px; margin: 0 auto; padding: 1.5rem; }
+    .jobs-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1rem; }
+    .job-card { background: var(--card-bg); border-radius: 8px; border: 1px solid var(--border); padding: 1rem; text-decoration: none; color: inherit; display: block; transition: box-shadow 0.2s; }
+    .job-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+    .job-card .company { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: var(--muted); margin-bottom: 0.25rem; }
+    .job-card .title { font-weight: 600; font-size: 1rem; margin-bottom: 0.35rem; line-height: 1.3; }
+    .job-card .meta { font-size: 0.875rem; color: var(--muted); }
+    .empty { text-align: center; padding: 3rem; color: var(--muted); }
+    .empty a { color: var(--accent); }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <h1>Příležitosti</h1>
+    <div class="count">{{ jobs|length }} otevřených příležitostí</div>
+    <form class="search-row" action="{{ url_for('index') }}" method="get">
+      <input type="text" name="q" value="{{ query }}" placeholder="Hledat (název pozice nebo firma)" autofocus>
+      <button type="submit">HLEDAT</button>
+    </form>
+    <div class="refresh-wrap">
+      <a href="{{ url_for('refresh', q=query) }}">Obnovit příležitosti z Cocuma</a>
+      {% if last_update %}<span class="last-update"> · naposledy {{ last_update }}</span>{% endif %}
+    </div>
+  </header>
+
+  <main class="main">
+    {% if not jobs %}
+      <div class="empty">
+        {% if query %}
+          <p>Pro „{{ query }}“ nebyly nalezeny žádné příležitosti.</p>
+          <p><a href="{{ url_for('index') }}">Zobrazit všechny</a></p>
+        {% else %}
+          <p>Zatím nemáte stažená data. Klikněte na <strong>Obnovit příležitosti z Cocuma</strong> výše.</p>
+        {% endif %}
+      </div>
+    {% else %}
+      <div class="jobs-grid">
+        {% for job in jobs %}
+          <a href="{{ job.link }}" class="job-card" target="_blank" rel="noopener">
+            <div class="company">{{ job.company or '—' }}</div>
+            <div class="title">{{ job.title or '—' }}</div>
+            <div class="meta">
+              {% if job.location %}{{ job.location }}{% endif %}
+              {% if job.location and job.employment_type %} · {% endif %}
+              {% if job.employment_type %}{{ job.employment_type }}{% endif %}
+            </div>
+          </a>
+        {% endfor %}
+      </div>
+    {% endif %}
+  </main>
+</body>
+</html>

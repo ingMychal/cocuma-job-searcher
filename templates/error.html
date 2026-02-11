@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Chyba | Cocuma Job Searcher</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 2rem; }
+    .error { color: #c00; }
+    a { color: #0066cc; }
+  </style>
+</head>
+<body>
+  <p class="error">{{ message }}</p>
+  <p><a href="{{ url_for('index') }}">Zpět na příležitosti</a></p>
+  <p><a href="{{ url_for('refresh') }}">Zkusit znovu načíst</a></p>
+</body>
+</html>
