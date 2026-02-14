@@ -1,10 +1,12 @@
 """
 Scrape Cocuma job listings and save as JSON.
 Uses retries, timeout, User-Agent, and rate limiting. Only overwrites data on full success.
+Atomic writes via temp file + os.replace() to prevent serving half-written data.
 """
 import json
 import logging
 import os
+import tempfile
 import time
 from urllib.parse import urljoin
 
@@ -17,9 +19,9 @@ logger = logging.getLogger(__name__)
 
 BASE_URL = "https://www.cocuma.cz"
 JOBS_URL = "https://www.cocuma.cz/jobs/"
-REQUEST_DELAY_SEC = 0.1
 TIMEOUT_SEC = 15
 MAX_RETRIES = 3
+MAX_PAGES = 100
 
 USER_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
@@ -89,21 +91,24 @@ def _parse_job_card(card, base_url: str) -> dict | None:
     }
 
 
-def scrape_jobs() -> list[dict]:
+def scrape_jobs(delay: float = 0.1) -> list[dict]:
     """
     Fetch all job pages from Cocuma and return list of job dicts.
     Raises on failure so caller can avoid overwriting existing data.
+
+    Args:
+        delay: seconds to wait between page requests (0.1 local, 1.0 production).
     """
     session = _session()
     jobs: list[dict] = []
     seen_links: set[str] = set()
     page = 1
 
-    while True:
+    while page <= MAX_PAGES:
         url = JOBS_URL if page == 1 else f"{JOBS_URL}page/{page}/"
         try:
             r = session.get(url, timeout=TIMEOUT_SEC)
-        except requests.RequestException as e:
+        except requests.RequestException:
             logger.exception("Request failed for %s", url)
             raise
 
@@ -126,7 +131,7 @@ def scrape_jobs() -> list[dict]:
             jobs.append(job)
 
         page += 1
-        time.sleep(REQUEST_DELAY_SEC)
+        time.sleep(delay)
 
     return jobs
 
@@ -144,9 +149,19 @@ def load_jobs(data_dir: str) -> list[dict]:
         return []
 
 
-def save_jobs(data_dir: str, jobs: list[dict]) -> None:
-    """Write jobs to data/jobs.json. Creates data_dir if needed."""
+def save_jobs_atomic(data_dir: str, jobs: list[dict]) -> None:
+    """Write jobs to data/jobs.json atomically (temp file + os.replace)."""
     os.makedirs(data_dir, exist_ok=True)
     path = os.path.join(data_dir, "jobs.json")
-    with open(path, "w", encoding="utf-8") as f:
-        json.dump(jobs, f, ensure_ascii=False, indent=2)
+    fd, tmp_path = tempfile.mkstemp(dir=data_dir, suffix=".tmp")
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            json.dump(jobs, f, ensure_ascii=False, indent=2)
+        os.replace(tmp_path, path)
+    except Exception:
+        # Clean up temp file on failure
+        try:
+            os.unlink(tmp_path)
+        except OSError:
+            pass
+        raise

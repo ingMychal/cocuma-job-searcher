@@ -3,51 +3,124 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Příležitosti | Cocuma Job Searcher</title>
+  <title>Příležitostník — Přesnější hledání příležitostí</title>
   <style>
     :root {
-      --text: #1a1a1a;
-      --muted: #666;
-      --border: #e0e0e0;
-      --primary: #000;
+      --text: #1e293b;
+      --muted: #64748b;
+      --border: #e2e8f0;
       --card-bg: #fff;
-      --accent: #0066cc;
+      --accent: #0d9488;
+      --accent-hover: #0f766e;
+      --accent-light: #ccfbf1;
+      --hero-from: #0f766e;
+      --hero-to: #0e7490;
+      --bg: #f8fafc;
     }
-    * { box-sizing: border-box; }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; color: var(--text); background: #f5f5f5; }
-    .header { background: var(--card-bg); border-bottom: 1px solid var(--border); padding: 1rem 1.5rem; }
-    .header h1 { margin: 0 0 1rem; font-size: 1.25rem; font-weight: 600; }
-    .count { font-weight: 600; margin-bottom: 0.5rem; }
-    .search-row { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem; }
-    .search-row input[type="text"] { flex: 1; min-width: 200px; padding: 0.5rem 0.75rem; border: 1px solid var(--border); border-radius: 4px; font-size: 1rem; }
-    .search-row button { padding: 0.5rem 1.25rem; background: var(--primary); color: #fff; border: none; border-radius: 4px; font-weight: 600; cursor: pointer; font-size: 0.875rem; }
-    .search-row button:hover { background: #333; }
-    .refresh-wrap { margin-top: 0.75rem; }
-    .last-update { color: var(--muted); font-size: 0.875rem; }
-    .refresh-wrap a { color: var(--accent); text-decoration: none; font-size: 0.875rem; }
-    .refresh-wrap a:hover { text-decoration: underline; }
-    .main { max-width: 1100px; margin: 0 auto; padding: 1.5rem; }
-    .jobs-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1rem; }
-    .job-card { background: var(--card-bg); border-radius: 8px; border: 1px solid var(--border); padding: 1rem; text-decoration: none; color: inherit; display: block; transition: box-shadow 0.2s; }
-    .job-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
-    .job-card .company { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: var(--muted); margin-bottom: 0.25rem; }
-    .job-card .title { font-weight: 600; font-size: 1rem; margin-bottom: 0.35rem; line-height: 1.3; }
-    .job-card .meta { font-size: 0.875rem; color: var(--muted); }
-    .empty { text-align: center; padding: 3rem; color: var(--muted); }
-    .empty a { color: var(--accent); }
+    * { box-sizing: border-box; margin: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: var(--text); background: var(--bg); }
+
+    /* Banner */
+    .banner { background: #fefce8; border-bottom: 1px solid #fde68a; padding: 0.4rem 1.5rem; font-size: 0.75rem; color: #854d0e; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem; }
+    .banner a { color: #854d0e; font-weight: 500; }
+    .help-btn { background: none; border: 1px solid #fbbf24; color: #854d0e; width: 1.5rem; height: 1.5rem; border-radius: 50%; cursor: pointer; font-size: 0.75rem; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; line-height: 1; }
+    .help-btn:hover { background: #fef3c7; }
+
+    /* Hero header */
+    .hero { background: linear-gradient(135deg, var(--hero-from), var(--hero-to)); color: #fff; padding: 2rem 1.5rem 2.25rem; }
+    .hero-inner { max-width: 720px; margin: 0 auto; text-align: center; }
+    .hero h1 { font-size: 1.75rem; font-weight: 700; margin-bottom: 0.25rem; letter-spacing: -0.02em; }
+    .hero .tagline { font-size: 0.9rem; opacity: 0.85; margin-bottom: 1.25rem; }
+    .search-form { display: flex; gap: 0.5rem; max-width: 560px; margin: 0 auto; }
+    .search-form input[type="text"] { flex: 1; padding: 0.7rem 1rem; border: none; border-radius: 8px; font-size: 1rem; outline: none; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+    .search-form input[type="text"]::placeholder { color: #94a3b8; }
+    .search-form button { padding: 0.7rem 1.5rem; background: #fff; color: var(--hero-from); border: none; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 0.9rem; box-shadow: 0 2px 8px rgba(0,0,0,0.15); transition: background 0.15s; }
+    .search-form button:hover { background: #f0fdfa; }
+    .hero-meta { margin-top: 1rem; font-size: 0.8rem; opacity: 0.75; display: flex; justify-content: center; gap: 1.5rem; flex-wrap: wrap; }
+    .hero-meta a { color: #fff; text-decoration: underline; text-underline-offset: 2px; }
+
+    /* Main content */
+    .main { max-width: 1140px; margin: 0 auto; padding: 1.5rem; }
+    .results-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem; }
+    .results-count { font-size: 0.85rem; color: var(--muted); }
+    .results-count strong { color: var(--text); }
+
+    /* Job cards */
+    .jobs-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 0.875rem; }
+    .job-card { background: var(--card-bg); border-radius: 10px; border: 1px solid var(--border); padding: 1rem 1rem 1rem 1.15rem; text-decoration: none; color: inherit; display: block; transition: box-shadow 0.2s, border-color 0.2s; position: relative; border-left: 3px solid var(--accent); }
+    .job-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.07); border-color: #cbd5e1; border-left-color: var(--accent-hover); }
+    .job-card .company { font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--accent); margin-bottom: 0.3rem; }
+    .job-card .title { font-weight: 600; font-size: 1rem; margin-bottom: 0.4rem; line-height: 1.35; color: var(--text); }
+    .job-card .meta { font-size: 0.8rem; color: var(--muted); display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    .job-card .meta .tag { background: #f1f5f9; padding: 0.15rem 0.5rem; border-radius: 4px; font-size: 0.75rem; }
+
+    /* Empty state */
+    .empty { text-align: center; padding: 4rem 1rem; color: var(--muted); }
+    .empty p { margin-bottom: 0.5rem; }
+    .empty a { color: var(--accent); font-weight: 500; }
+
+    /* Modal */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(15,23,42,0.5); display: flex; align-items: center; justify-content: center; z-index: 100; padding: 1rem; backdrop-filter: blur(2px); }
+    .modal-overlay.hidden { display: none; }
+    .modal { background: #fff; border-radius: 14px; max-width: 460px; width: 100%; padding: 1.75rem; box-shadow: 0 12px 40px rgba(0,0,0,0.18); }
+    .modal h2 { margin: 0 0 0.5rem; font-size: 1.15rem; color: var(--hero-from); }
+    .modal p { margin: 0 0 0.6rem; font-size: 0.88rem; line-height: 1.55; color: #475569; }
+    .modal ul { margin: 0.5rem 0 1rem; padding-left: 1.25rem; font-size: 0.88rem; line-height: 1.7; color: #475569; }
+    .modal ul li { margin-bottom: 0.35rem; }
+    .modal-close { display: block; margin-left: auto; padding: 0.5rem 1.5rem; background: var(--accent); color: #fff; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.875rem; transition: background 0.15s; }
+    .modal-close:hover { background: var(--accent-hover); }
+
+    /* Footer */
+    .footer { text-align: center; padding: 2.5rem 1.5rem 1.5rem; font-size: 0.8rem; color: var(--muted); }
+    .footer a { color: var(--accent); text-decoration: none; font-weight: 500; }
+    .footer a:hover { text-decoration: underline; }
+    .footer-links { display: flex; justify-content: center; gap: 1.25rem; }
+
+    /* Responsive */
+    @media (max-width: 480px) {
+      .hero h1 { font-size: 1.35rem; }
+      .search-form { flex-direction: column; }
+      .search-form button { width: 100%; }
+    }
   </style>
 </head>
 <body>
-  <header class="header">
-    <h1>Příležitosti</h1>
-    <div class="count">{{ jobs|length }} otevřených příležitostí</div>
-    <form class="search-row" action="{{ url_for('index') }}" method="get">
-      <input type="text" name="q" value="{{ query }}" placeholder="Hledat (název pozice nebo firma)" autofocus>
-      <button type="submit">HLEDAT</button>
-    </form>
-    <div class="refresh-wrap">
-      <a href="{{ url_for('refresh', q=query) }}">Obnovit příležitosti z Cocuma</a>
-      {% if last_update %}<span class="last-update"> · naposledy {{ last_update }}</span>{% endif %}
+  <!-- Welcome modal (first visit only) -->
+  <div id="welcome-modal" class="modal-overlay hidden">
+    <div class="modal">
+      <h2>Vítejte v Příležitostníku!</h2>
+      <p>Tento nástroj vylepšuje vyhledávání na cocuma.cz:</p>
+      <ul>
+        <li><strong>Přesnější výsledky</strong> — hledá pouze v názvu pozice a firmě, ne v celém popisu. Když napíšete „manager", dostanete skutečné manažerské pozice.</li>
+        <li><strong>Rychlé filtrování</strong> — všechna data jsou stažená lokálně, výsledky se zobrazí okamžitě.</li>
+        <li><strong>Více slov = přesnější</strong> — „project manager" najde pouze pozice, kde se obě slova vyskytují v názvu nebo firmě.</li>
+      </ul>
+      <p>Data pochází z <a href="https://www.cocuma.cz/jobs/" target="_blank" rel="noopener">cocuma.cz/jobs</a>. S Cocuma nejsme nijak spojeni.</p>
+      <button class="modal-close" id="welcome-dismiss">Rozumím</button>
+    </div>
+  </div>
+
+  <div class="banner">
+    <span>Data z <a href="https://www.cocuma.cz/jobs/" target="_blank" rel="noopener">cocuma.cz/jobs</a>. S Cocuma nejsme nijak spojeni.</span>
+    <button class="help-btn" id="help-btn" title="Nápověda">?</button>
+  </div>
+
+  <header class="hero">
+    <div class="hero-inner">
+      <h1>Příležitostník</h1>
+      <p class="tagline">Přesnější hledání příležitostí z Cocuma.cz</p>
+      <form class="search-form" action="{{ url_for('index') }}" method="get">
+        <input type="text" name="q" value="{{ query }}" placeholder="Název pozice nebo firma…" autofocus>
+        <button type="submit">HLEDAT</button>
+      </form>
+      <div class="hero-meta">
+        {% if not public_deploy %}
+          <a href="{{ url_for('refresh', q=query) }}">Obnovit data</a>
+        {% endif %}
+        {% if last_update %}
+          <span>Aktualizováno {{ last_update }}</span>
+        {% endif %}
+      </div>
     </div>
   </header>
 
@@ -55,27 +128,76 @@
     {% if not jobs %}
       <div class="empty">
         {% if query %}
-          <p>Pro „{{ query }}“ nebyly nalezeny žádné příležitosti.</p>
+          <p>Pro „{{ query }}" nebyly nalezeny žádné příležitosti.</p>
           <p><a href="{{ url_for('index') }}">Zobrazit všechny</a></p>
         {% else %}
-          <p>Zatím nemáte stažená data. Klikněte na <strong>Obnovit příležitosti z Cocuma</strong> výše.</p>
+          {% if public_deploy %}
+            <p>Data se právě načítají. Obnovte stránku za chvíli.</p>
+          {% else %}
+            <p>Zatím nemáte stažená data.</p>
+            <p><a href="{{ url_for('refresh') }}">Stáhnout příležitosti z Cocuma</a></p>
+          {% endif %}
         {% endif %}
       </div>
     {% else %}
+      <div class="results-bar">
+        <span class="results-count">
+          {% if query %}
+            <strong>{{ jobs|length }}</strong> výsledků pro „{{ query }}"
+          {% else %}
+            <strong>{{ jobs|length }}</strong> otevřených příležitostí
+          {% endif %}
+        </span>
+      </div>
       <div class="jobs-grid">
         {% for job in jobs %}
           <a href="{{ job.link }}" class="job-card" target="_blank" rel="noopener">
             <div class="company">{{ job.company or '—' }}</div>
             <div class="title">{{ job.title or '—' }}</div>
             <div class="meta">
-              {% if job.location %}{{ job.location }}{% endif %}
-              {% if job.location and job.employment_type %} · {% endif %}
-              {% if job.employment_type %}{{ job.employment_type }}{% endif %}
+              {% if job.location %}<span class="tag">{{ job.location }}</span>{% endif %}
+              {% if job.employment_type %}<span class="tag">{{ job.employment_type }}</span>{% endif %}
             </div>
           </a>
         {% endfor %}
       </div>
     {% endif %}
   </main>
+
+  <footer class="footer">
+    <div class="footer-links">
+      <!-- TODO: Replace with your actual URLs -->
+      <a href="https://github.com/YOUR_USERNAME" target="_blank" rel="noopener">GitHub</a>
+      <a href="https://linkedin.com/in/YOUR_USERNAME" target="_blank" rel="noopener">LinkedIn</a>
+    </div>
+  </footer>
+
+  <script>
+    (function () {
+      var modal = document.getElementById('welcome-modal');
+      var dismissBtn = document.getElementById('welcome-dismiss');
+      var helpBtn = document.getElementById('help-btn');
+
+      if (!localStorage.getItem('cocuma_welcome_seen')) {
+        modal.classList.remove('hidden');
+      }
+
+      dismissBtn.addEventListener('click', function () {
+        modal.classList.add('hidden');
+        localStorage.setItem('cocuma_welcome_seen', '1');
+      });
+
+      modal.addEventListener('click', function (e) {
+        if (e.target === modal) {
+          modal.classList.add('hidden');
+          localStorage.setItem('cocuma_welcome_seen', '1');
+        }
+      });
+
+      helpBtn.addEventListener('click', function () {
+        modal.classList.remove('hidden');
+      });
+    })();
+  </script>
 </body>
 </html>
