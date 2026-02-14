@@ -100,6 +100,30 @@ def _last_update_iso(data_dir: str) -> str | None:
         return None
 
 
+def _next_refresh_text(data_dir: str) -> str | None:
+    """Return Czech text like 'za 3 hodiny 25 minut' until next auto-refresh, or None."""
+    path = os.path.join(data_dir, "jobs.json")
+    if not os.path.isfile(path):
+        return "probíhá nyní"
+    try:
+        age = time.time() - os.path.getmtime(path)
+    except OSError:
+        return None
+    remaining = STALE_SECONDS - age
+    if remaining <= 0:
+        return "probíhá nyní"
+    hours = int(remaining // 3600)
+    minutes = int((remaining % 3600) // 60)
+    if hours > 0 and minutes > 0:
+        return f"za {hours} hod. {minutes} min."
+    elif hours > 0:
+        return f"za {hours} hod."
+    elif minutes > 0:
+        return f"za {minutes} min."
+    else:
+        return "probíhá nyní"
+
+
 # --- Routes ---
 
 
@@ -111,11 +135,13 @@ def index():
     if q:
         jobs = filter_jobs_by_title_or_company(jobs, q)
     last_update = _last_update_iso(DATA_DIR)
+    next_refresh = _next_refresh_text(DATA_DIR) if PUBLIC_DEPLOY else None
     return render_template(
         "index.html",
         jobs=jobs,
         query=q,
         last_update=last_update,
+        next_refresh=next_refresh,
         public_deploy=PUBLIC_DEPLOY,
     )
 
