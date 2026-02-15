@@ -62,16 +62,15 @@
     /* Modal */
     .modal-overlay { position: fixed; inset: 0; background: rgba(15,23,42,0.5); display: flex; align-items: center; justify-content: center; z-index: 100; padding: 1rem; backdrop-filter: blur(2px); }
     .modal-overlay.hidden { display: none; }
-    .modal { background: #fff; border-radius: 14px; max-width: 640px; width: 100%; padding: 1.75rem; box-shadow: 0 12px 40px rgba(0,0,0,0.18); max-height: 90vh; overflow-y: auto; }
+    .modal { background: #fff; border-radius: 14px; max-width: 960px; width: 100%; padding: 1.75rem; box-shadow: 0 12px 40px rgba(0,0,0,0.18); max-height: 90vh; overflow-y: auto; }
     .modal h2 { margin: 0 0 0.5rem; font-size: 1.15rem; color: var(--hero-from); }
     .modal p { margin: 0 0 0.6rem; font-size: 0.88rem; line-height: 1.55; color: #475569; }
     .modal ul { margin: 0.5rem 0 1rem; padding-left: 1.25rem; font-size: 0.88rem; line-height: 1.7; color: #475569; }
     .modal ul li { margin-bottom: 0.35rem; }
-    .modal-compare { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin: 0.75rem 0 1rem; }
+    .modal-compare { display: grid; grid-template-columns: 1fr; gap: 0.75rem; margin: 0.75rem 0 1rem; }
     .modal-compare figure { margin: 0; }
     .modal-compare figcaption { font-size: 0.75rem; font-weight: 600; color: var(--muted); margin-bottom: 0.3rem; }
     .modal-compare img { width: 100%; border-radius: 6px; border: 1px solid var(--border); }
-    @media (max-width: 540px) { .modal-compare { grid-template-columns: 1fr; } }
     .modal-close { display: block; margin-left: auto; padding: 0.5rem 1.5rem; background: var(--accent); color: #fff; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.875rem; transition: background 0.15s; }
     .modal-close:hover { background: var(--accent-hover); }
 
@@ -93,24 +92,21 @@
   <!-- Welcome modal (first visit only) -->
   <div id="welcome-modal" class="modal-overlay hidden">
     <div class="modal">
-      <h2>Vítejte v Příležitostníku!</h2>
-      <p>Cocuma.cz prohledává i popisy pozic, takže výsledky obsahují irelevantní nabídky. Příležitostník hledá pouze v <strong>názvu pozice</strong> a <strong>firmě</strong> — výsledky jsou přesnější.</p>
-      <p style="font-size:0.8rem; color: var(--muted);">Příklad: hledání „analyst"</p>
+      <h2>Proč Příležitostník?</h2>
+      <p>Hledání na <strong>Cocuma.cz</strong> prohledává i popisy pozic — výsledky proto obsahují pozice, které s hledaným slovem nesouvisí.</p>
+      <p><strong>Příležitostník</strong> hledá pouze v názvu pozice a firmě. Výsledky jsou přesnější.</p>
+      <p style="font-size:0.8rem; color: var(--muted); margin-top: 0.75rem;">Příklad: hledání „analyst"</p>
       <div class="modal-compare">
         <figure>
-          <figcaption>Cocuma.cz — 10 výsledků (3 irelevantní)</figcaption>
+          <figcaption>❌ Cocuma.cz — 10 výsledků, 3 irelevantní</figcaption>
           <img src="{{ url_for('static', filename='img/cocuma-search.png') }}" alt="Cocuma search results">
         </figure>
         <figure>
-          <figcaption>Příležitostník — 7 výsledků (všechny relevantní)</figcaption>
+          <figcaption>✅ Příležitostník — 7 výsledků, všechny relevantní</figcaption>
           <img src="{{ url_for('static', filename='img/prilezitostnik-search.png') }}" alt="Příležitostník search results">
         </figure>
       </div>
-      <ul>
-        <li><strong>Rychlé filtrování</strong> — výsledky se zobrazí okamžitě.</li>
-        <li><strong>Více slov = přesnější</strong> — „senior analyst" najde pouze pozice, kde se obě slova vyskytují v názvu nebo firmě.</li>
-      </ul>
-      <p>Data pochází z <a href="https://www.cocuma.cz/jobs/" target="_blank" rel="noopener">cocuma.cz/jobs</a>. S Cocuma nejsme nijak spojeni.</p>
+      <p style="font-size:0.8rem; color: var(--muted); margin-top: 0.5rem;">Data z <a href="https://www.cocuma.cz/jobs/" target="_blank" rel="noopener">cocuma.cz/jobs</a>. S Cocuma nejsme nijak spojeni.</p>
       <button class="modal-close" id="welcome-dismiss">Rozumím</button>
     </div>
   </div>
