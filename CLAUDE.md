@@ -23,7 +23,7 @@ Assess the current state of the codebase. The project was partially refactored i
 - Multi-word query = AND (each typed word must prefix-match some word in title or company).
 - Case-insensitive and **diacritic-insensitive** (accents folded, so "reditel" finds "ředitel").
 - Keywords come only from browser search input (`?q=`). No server-side defaults, no config files.
-- Filtering is **live in the browser**: the server sends all jobs, and vanilla JS in `index.html` hides/shows cards as the user types (no reload). `?q=` on load pre-fills the box and applies the filter, and typing keeps the URL in sync via `history.replaceState`. `search.py` holds the same rules in Python but is no longer wired into `app.py`.
+- Filtering is **live in the browser**: the server sends all jobs, and vanilla JS in `index.html` hides/shows cards as the user types (no reload). `?q=` on load pre-fills the box and applies the filter, and typing keeps the URL in sync via `history.replaceState`.
 
 ## Lazy background refresh (production mode only)
 
@@ -85,8 +85,7 @@ This is the most important feature to implement correctly:
 
 - `app.py` — Flask app with all routes
 - `scraper.py` — Scraper logic
-- `search.py` — Search/filter logic
-- `templates/index.html` — Main page template
+- `templates/index.html` — Main page template (holds the live client-side search: word-prefix, scope toggle, diacritic folding)
 - `templates/error.html` — Error page
 - `requirements.txt`
 - `.gitignore`

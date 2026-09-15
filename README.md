@@ -36,7 +36,7 @@ Poté otevřete **http://127.0.0.1:5000/** (aplikace to udělá za vás).
 ### Jak na to
 
 1. Klikněte na **Obnovit data** pro stažení aktuálních nabídek.
-2. Hledejte v poli (např. *analyst*) — výsledky se filtrují pouze podle názvu pozice a firmy.
+2. Hledejte v poli (např. *analyst*) — výsledky se filtrují živě podle názvu pozice a firmy. Přepínačem **Pozice / Firmy / Obojí** můžete hledání zúžit jen na názvy, jen na firmy, nebo obojí.
 3. Stránku můžete kdykoliv obnovit; pro čerstvá data z Cocuma klikněte znovu na **Obnovit data**.
 
 Data se ukládají do `data/jobs.json`. Žádný účet, žádné složité URL — stačí spustit a hledat.
