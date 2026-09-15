@@ -24,6 +24,8 @@ Assess the current state of the codebase. The project was partially refactored i
 
 ## Lazy background refresh (production mode only)
 
+**Why it works this way (by design — do not change):** the scrape is never a user-facing action. There is no button, route, or parameter that lets an end user start a scrape on demand. A visit only *may* start one, and only when the data is already older than 12 hours, so the server hits Cocuma at most about twice a day no matter how much traffic arrives. This protects Cocuma's server from being hammered through ours. Keep this cap; do not add any user-triggerable refresh in production.
+
 This is the most important feature to implement correctly:
 
 1. User visits the page → serve existing `data/jobs.json` immediately (even if stale).
