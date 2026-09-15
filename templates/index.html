@@ -255,12 +255,19 @@
           thumb.style.transform = 'translateX(' + (btn.offsetLeft - thumb.offsetLeft) + 'px)';
         }
 
+        // Czech plural: 1 → výsledek, 2–4 → výsledky, 5+ → výsledků.
+        function plural(n, one, few, many) {
+          return n === 1 ? one : (n >= 2 && n <= 4 ? few : many);
+        }
+
         function renderCount(query, visible) {
           if (!countEl) return;
           if (query && visible === 0) { countEl.textContent = ''; return; }
           var strong = document.createElement('strong');
           strong.textContent = query ? visible : total;
-          var label = query ? (' výsledků pro „' + query + '"') : ' otevřených příležitostí';
+          var label = query
+            ? (' ' + plural(visible, 'výsledek', 'výsledky', 'výsledků') + ' pro „' + query + '"')
+            : ' otevřených příležitostí';
           countEl.textContent = '';
           countEl.appendChild(strong);
           countEl.appendChild(document.createTextNode(label));
@@ -290,6 +297,14 @@
         }
 
         input.addEventListener('input', applyFilter);
+
+        // Escape clears the search and keeps focus for a fresh query.
+        input.addEventListener('keydown', function (e) {
+          if (e.key === 'Escape' && input.value) {
+            input.value = '';
+            applyFilter();
+          }
+        });
 
         var PLACEHOLDERS = {
           title: 'Název pozice…',
