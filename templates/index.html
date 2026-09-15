@@ -34,8 +34,11 @@
     .search-form { display: flex; gap: 0.5rem; max-width: 560px; margin: 0 auto; }
     .search-form input[type="text"] { flex: 1; padding: 0.7rem 1rem; border: none; border-radius: 8px; font-size: 1rem; outline: none; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
     .search-form input[type="text"]::placeholder { color: #94a3b8; }
-    .search-form button { padding: 0.7rem 1.5rem; background: #fff; color: var(--hero-from); border: none; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 0.9rem; box-shadow: 0 2px 8px rgba(0,0,0,0.15); transition: background 0.15s; }
-    .search-form button:hover { background: #f0fdfa; }
+    .scope { position: relative; display: inline-flex; margin: 0.75rem auto 0; padding: 3px; background: rgba(255,255,255,0.18); border-radius: 999px; }
+    .scope-thumb { position: absolute; top: 3px; bottom: 3px; left: 0; width: 0; background: #fff; border-radius: 999px; box-shadow: 0 2px 6px rgba(0,0,0,0.15); transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1), width 0.28s cubic-bezier(0.34, 1.56, 0.64, 1); }
+    .scope-btn { position: relative; z-index: 1; padding: 0.35rem 1.1rem; background: transparent; color: #fff; border: none; border-radius: 999px; font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: color 0.2s; }
+    .scope-btn.is-active { color: var(--hero-from); }
+    @media (prefers-reduced-motion: reduce) { .scope-thumb { transition: none; } }
     .hero-meta { margin-top: 1rem; font-size: 0.8rem; opacity: 0.75; display: flex; justify-content: center; gap: 1.5rem; flex-wrap: wrap; }
     .hero-meta a { color: #fff; text-decoration: underline; text-underline-offset: 2px; }
 
@@ -58,6 +61,7 @@
     .empty { text-align: center; padding: 4rem 1rem; color: var(--muted); }
     .empty p { margin-bottom: 0.5rem; }
     .empty a { color: var(--accent); font-weight: 500; }
+    .hidden { display: none !important; }
 
     /* Modal */
     .modal-overlay { position: fixed; inset: 0; background: rgba(15,23,42,0.5); display: flex; align-items: center; justify-content: center; z-index: 100; padding: 1rem; backdrop-filter: blur(2px); }
@@ -83,8 +87,6 @@
     /* Responsive */
     @media (max-width: 480px) {
       .hero h1 { font-size: 1.35rem; }
-      .search-form { flex-direction: column; }
-      .search-form button { width: 100%; }
     }
   </style>
 </head>
@@ -121,9 +123,14 @@
       <h1>Příležitostník</h1>
       <p class="tagline">Přesnější hledání příležitostí z Cocuma.cz</p>
       <form class="search-form" action="{{ url_for('index') }}" method="get">
-        <input type="text" name="q" value="{{ query }}" placeholder="Název pozice nebo firma…" autofocus>
-        <button type="submit">HLEDAT</button>
+        <input type="text" id="q" name="q" value="{{ query }}" placeholder="Název pozice nebo firma…" autofocus>
       </form>
+      <div class="scope" role="group" aria-label="Kde hledat">
+        <span class="scope-thumb" aria-hidden="true"></span>
+        <button type="button" class="scope-btn" data-scope="title">Pozice</button>
+        <button type="button" class="scope-btn" data-scope="company">Firmy</button>
+        <button type="button" class="scope-btn is-active" data-scope="both">Obojí</button>
+      </div>
       <div class="hero-meta">
         {% if not public_deploy %}
           <a href="{{ url_for('refresh', q=query) }}">Obnovit data</a>
@@ -141,31 +148,21 @@
   <main class="main">
     {% if not jobs %}
       <div class="empty">
-        {% if query %}
-          <p>Pro „{{ query }}" nebyly nalezeny žádné příležitosti.</p>
-          <p><a href="{{ url_for('index') }}">Zobrazit všechny</a></p>
+        {% if public_deploy %}
+          <p>Data se právě načítají. Obnovte stránku za chvíli.</p>
         {% else %}
-          {% if public_deploy %}
-            <p>Data se právě načítají. Obnovte stránku za chvíli.</p>
-          {% else %}
-            <p>Zatím nemáte stažená data.</p>
-            <p><a href="{{ url_for('refresh') }}">Stáhnout příležitosti z Cocuma</a></p>
-          {% endif %}
+          <p>Zatím nemáte stažená data.</p>
+          <p><a href="{{ url_for('refresh') }}">Stáhnout příležitosti z Cocuma</a></p>
         {% endif %}
       </div>
     {% else %}
       <div class="results-bar">
-        <span class="results-count">
-          {% if query %}
-            <strong>{{ jobs|length }}</strong> výsledků pro „{{ query }}"
-          {% else %}
-            <strong>{{ jobs|length }}</strong> otevřených příležitostí
-          {% endif %}
-        </span>
+        <span class="results-count" id="results-count"></span>
       </div>
-      <div class="jobs-grid">
+      <div class="jobs-grid" id="jobs-grid" data-total="{{ jobs|length }}">
         {% for job in jobs %}
-          <a href="{{ job.link }}" class="job-card" target="_blank" rel="noopener">
+          <a href="{{ job.link }}" class="job-card" target="_blank" rel="noopener"
+             data-title="{{ (job.title or '')|lower }}" data-company="{{ (job.company or '')|lower }}">
             <div class="company">{{ job.company or '—' }}</div>
             <div class="title">{{ job.title or '—' }}</div>
             <div class="meta">
@@ -174,6 +171,9 @@
             </div>
           </a>
         {% endfor %}
+      </div>
+      <div class="empty hidden" id="no-results">
+        <p>Pro „<span id="no-results-q"></span>" nebyly nalezeny žádné příležitosti.</p>
       </div>
     {% endif %}
   </main>
@@ -210,6 +210,118 @@
       helpBtn.addEventListener('click', function () {
         modal.classList.remove('hidden');
       });
+
+      // --- Live search: filter cards as the user types (title + company only) ---
+      var input = document.getElementById('q');
+      var grid = document.getElementById('jobs-grid');
+      var countEl = document.getElementById('results-count');
+      var noResults = document.getElementById('no-results');
+      var noResultsQ = document.getElementById('no-results-q');
+
+      if (input) {
+        // Caret at the end of any prefilled text, so Backspace deletes right away.
+        if (input.value) {
+          input.setSelectionRange(input.value.length, input.value.length);
+        }
+        // Don't reload the page on Enter — filtering is already live.
+        if (input.form) {
+          input.form.addEventListener('submit', function (e) { e.preventDefault(); });
+        }
+      }
+
+      // Fold accents (ř→r) and lowercase, then split into words on anything non-alphanumeric.
+      function toWords(str) {
+        return (str || '')
+          .normalize('NFD')
+          .replace(/[̀-ͯ]/g, '')
+          .toLowerCase()
+          .split(/[^a-z0-9]+/)
+          .filter(Boolean);
+      }
+
+      if (input && grid) {
+        var cards = Array.prototype.slice.call(grid.querySelectorAll('.job-card'));
+        var total = parseInt(grid.dataset.total, 10) || cards.length;
+        // Pre-compute each card's title and company words once.
+        var cardWords = cards.map(function (c) {
+          return { title: toWords(c.dataset.title), company: toWords(c.dataset.company) };
+        });
+        // Which field(s) to search: "title", "company", or "both".
+        var scope = 'both';
+        var scopeBtns = Array.prototype.slice.call(document.querySelectorAll('.scope-btn'));
+        var thumb = document.querySelector('.scope-thumb');
+
+        // Slide the white pill under the active button.
+        function moveThumb(btn) {
+          if (!thumb || !btn) return;
+          thumb.style.width = btn.offsetWidth + 'px';
+          thumb.style.transform = 'translateX(' + (btn.offsetLeft - thumb.offsetLeft) + 'px)';
+        }
+
+        function renderCount(query, visible) {
+          if (!countEl) return;
+          if (query && visible === 0) { countEl.textContent = ''; return; }
+          var strong = document.createElement('strong');
+          strong.textContent = query ? visible : total;
+          var label = query ? (' výsledků pro „' + query + '"') : ' otevřených příležitostí';
+          countEl.textContent = '';
+          countEl.appendChild(strong);
+          countEl.appendChild(document.createTextNode(label));
+        }
+
+        function applyFilter() {
+          var query = input.value.trim();
+          var words = toWords(query);
+          var visible = 0;
+          for (var i = 0; i < cards.length; i++) {
+            var cw = cardWords[i];
+            var haystack = scope === 'title' ? cw.title
+              : scope === 'company' ? cw.company
+              : cw.title.concat(cw.company);
+            // Each typed word must be the start of some word in the searched field(s).
+            var match = words.every(function (w) {
+              return haystack.some(function (hw) { return hw.indexOf(w) === 0; });
+            });
+            cards[i].classList.toggle('hidden', !match);
+            if (match) visible++;
+          }
+          if (noResults) noResults.classList.toggle('hidden', visible !== 0);
+          if (noResultsQ) noResultsQ.textContent = query;
+          renderCount(query, visible);
+          // Keep the URL shareable without reloading.
+          history.replaceState(null, '', query ? ('?q=' + encodeURIComponent(query)) : location.pathname);
+        }
+
+        input.addEventListener('input', applyFilter);
+
+        var PLACEHOLDERS = {
+          title: 'Název pozice…',
+          company: 'Název firmy…',
+          both: 'Název pozice nebo firma…'
+        };
+
+        function selectScope(btn) {
+          scope = btn.dataset.scope;
+          scopeBtns.forEach(function (b) { b.classList.toggle('is-active', b === btn); });
+          input.placeholder = PLACEHOLDERS[scope] || PLACEHOLDERS.both;
+          moveThumb(btn);
+          applyFilter();
+        }
+
+        scopeBtns.forEach(function (btn) {
+          btn.addEventListener('click', function () { selectScope(btn); });
+        });
+
+        // Position the pill under the default selection, and keep it aligned on resize.
+        var activeBtn = document.querySelector('.scope-btn.is-active') || scopeBtns[0];
+        moveThumb(activeBtn);
+        input.placeholder = PLACEHOLDERS[activeBtn.dataset.scope] || PLACEHOLDERS.both;
+        window.addEventListener('resize', function () {
+          moveThumb(document.querySelector('.scope-btn.is-active'));
+        });
+
+        applyFilter();
+      }
     })();
   </script>
 </body>

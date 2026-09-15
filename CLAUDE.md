@@ -18,18 +18,21 @@ Assess the current state of the codebase. The project was partially refactored i
 ## Search rules
 
 - Search only in **job title** and **company name**. Never description.
-- Multi-word query = AND (each word must appear in title or company).
-- Case-insensitive.
+- A segmented toggle (Pozice / Firmy / Obojí, default Obojí) lets the user narrow the search to titles only, companies only, or both.
+- Match on **word prefix**: a typed word matches when some word in the title or company *starts with* it (e.g. "k" matches "Konzultant", not "Praha"). Not substring-anywhere.
+- Multi-word query = AND (each typed word must prefix-match some word in title or company).
+- Case-insensitive and **diacritic-insensitive** (accents folded, so "reditel" finds "ředitel").
 - Keywords come only from browser search input (`?q=`). No server-side defaults, no config files.
+- Filtering is **live in the browser**: the server sends all jobs, and vanilla JS in `index.html` hides/shows cards as the user types (no reload). `?q=` on load pre-fills the box and applies the filter, and typing keeps the URL in sync via `history.replaceState`. `search.py` holds the same rules in Python but is no longer wired into `app.py`.
 
 ## Lazy background refresh (production mode only)
 
-**Why it works this way (by design — do not change):** the scrape is never a user-facing action. There is no button, route, or parameter that lets an end user start a scrape on demand. A visit only *may* start one, and only when the data is already older than 12 hours, so the server hits Cocuma at most about twice a day no matter how much traffic arrives. This protects Cocuma's server from being hammered through ours. Keep this cap; do not add any user-triggerable refresh in production.
+**Why it works this way (by design — do not change):** the scrape is never a user-facing action. There is no button, route, or parameter that lets an end user start a scrape on demand. A visit only *may* start one, and only when the data is already older than 1 hour, so the server hits Cocuma at most about once an hour no matter how much traffic arrives. This protects Cocuma's server from being hammered through ours. Keep this cap; do not add any user-triggerable refresh in production.
 
 This is the most important feature to implement correctly:
 
 1. User visits the page → serve existing `data/jobs.json` immediately (even if stale).
-2. Check if `jobs.json` is missing or older than 12 hours.
+2. Check if `jobs.json` is missing or older than 1 hour.
 3. If yes → start scrape in a **background thread** (never block the request).
 4. Page includes a small JS snippet that polls a lightweight endpoint (e.g. `GET /last-update`) every few seconds.
 5. When the background scrape finishes and the timestamp changes → JS reloads the page automatically. No loading spinner, no notification to user.

@@ -12,12 +12,10 @@ import threading
 import time
 import webbrowser
 from datetime import datetime
-from threading import Timer
 
 from flask import Flask, Response, abort, redirect, render_template, request, url_for
 
 from scraper import load_jobs, save_jobs_atomic, scrape_jobs
-from search import filter_jobs_by_title_or_company
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
@@ -41,19 +39,22 @@ PUBLIC_DEPLOY = _is_public_deploy()
 
 _scrape_lock = threading.Lock()
 _scrape_running = False
-STALE_SECONDS = 12 * 60 * 60  # 12 hours
+STALE_SECONDS = 60 * 60  # 1 hour
+
+
+def _jobs_mtime(data_dir: str) -> float | None:
+    """Last-modified time of jobs.json, or None if missing/unreadable."""
+    path = os.path.join(data_dir, "jobs.json")
+    try:
+        return os.path.getmtime(path)
+    except OSError:
+        return None
 
 
 def _jobs_are_stale(data_dir: str) -> bool:
-    """Return True if jobs.json is missing or older than 12 hours."""
-    path = os.path.join(data_dir, "jobs.json")
-    if not os.path.isfile(path):
-        return True
-    try:
-        age = time.time() - os.path.getmtime(path)
-        return age > STALE_SECONDS
-    except OSError:
-        return True
+    """Return True if jobs.json is missing or older than STALE_SECONDS."""
+    mtime = _jobs_mtime(data_dir)
+    return mtime is None or (time.time() - mtime) > STALE_SECONDS
 
 
 def _background_scrape(data_dir: str, delay: float) -> None:
@@ -90,38 +91,27 @@ def _maybe_trigger_background_scrape() -> None:
 
 def _last_update_iso(data_dir: str) -> str | None:
     """Return last update time of jobs.json as formatted string, or None if missing."""
-    path = os.path.join(data_dir, "jobs.json")
-    if not os.path.isfile(path):
+    mtime = _jobs_mtime(data_dir)
+    if mtime is None:
         return None
-    try:
-        m = os.path.getmtime(path)
-        return datetime.fromtimestamp(m).strftime("%d. %m. %Y, %H:%M")
-    except OSError:
-        return None
+    return datetime.fromtimestamp(mtime).strftime("%d. %m. %Y, %H:%M")
 
 
-def _next_refresh_text(data_dir: str) -> str | None:
-    """Return Czech text like 'za 3 hodiny 25 minut' until next auto-refresh, or None."""
-    path = os.path.join(data_dir, "jobs.json")
-    if not os.path.isfile(path):
-        return "probíhá nyní"
-    try:
-        age = time.time() - os.path.getmtime(path)
-    except OSError:
-        return None
-    remaining = STALE_SECONDS - age
+def _next_refresh_text(data_dir: str) -> str:
+    """Return Czech text like 'za 25 min.' until the next auto-refresh."""
+    mtime = _jobs_mtime(data_dir)
+    remaining = STALE_SECONDS - (time.time() - mtime) if mtime is not None else 0
     if remaining <= 0:
         return "probíhá nyní"
     hours = int(remaining // 3600)
     minutes = int((remaining % 3600) // 60)
-    if hours > 0 and minutes > 0:
+    if hours and minutes:
         return f"za {hours} hod. {minutes} min."
-    elif hours > 0:
+    if hours:
         return f"za {hours} hod."
-    elif minutes > 0:
+    if minutes:
         return f"za {minutes} min."
-    else:
-        return "probíhá nyní"
+    return "probíhá nyní"
 
 
 # --- Routes ---
@@ -131,9 +121,8 @@ def _next_refresh_text(data_dir: str) -> str | None:
 def index():
     _maybe_trigger_background_scrape()
     q = request.args.get("q", "").strip()
+    # All jobs go to the page; filtering happens live in the browser as the user types.
     jobs = load_jobs(DATA_DIR)
-    if q:
-        jobs = filter_jobs_by_title_or_company(jobs, q)
     last_update = _last_update_iso(DATA_DIR)
     next_refresh = _next_refresh_text(DATA_DIR) if PUBLIC_DEPLOY else None
     return render_template(
@@ -174,5 +163,5 @@ if __name__ == "__main__":
     def _open_browser():
         webbrowser.open("http://127.0.0.1:5000/")
 
-    Timer(1.2, _open_browser).start()
+    threading.Timer(1.2, _open_browser).start()
     app.run(debug=True, port=5000)
