@@ -136,7 +136,9 @@
           <a href="{{ url_for('refresh', q=query) }}">Obnovit data</a>
         {% endif %}
         {% if last_update %}
-          <span>Aktualizováno {{ last_update }}</span>
+          <span>Aktualizováno
+            <time id="last-update" data-mtime="{{ jobs_mtime }}" title="{{ last_update }}">{{ last_update }}</time>
+          </span>
         {% endif %}
       </div>
     </div>
@@ -334,6 +336,36 @@
 
         applyFilter();
       }
+    })();
+  </script>
+
+  <script>
+    // Show the update time as relative Czech text ("Aktualizováno před 20 min"),
+    // recomputed every minute. Exact time stays on hover via the title attribute.
+    (function () {
+      var el = document.getElementById('last-update');
+      if (!el) return;
+      var mtime = parseInt(el.getAttribute('data-mtime'), 10);
+      if (!mtime) return;
+
+      function czechAgo(n, one, few, many) {
+        if (n === 1) return 'před 1 ' + one;
+        return 'před ' + n + ' ' + (n >= 2 && n <= 4 ? few : many);
+      }
+
+      function render() {
+        var secs = Math.floor(Date.now() / 1000 - mtime);
+        if (secs < 60) { el.textContent = 'právě teď'; return; }
+        var mins = Math.floor(secs / 60);
+        if (mins < 60) { el.textContent = czechAgo(mins, 'minutou', 'minutami', 'minutami'); return; }
+        var hours = Math.floor(mins / 60);
+        if (hours < 24) { el.textContent = czechAgo(hours, 'hodinou', 'hodinami', 'hodinami'); return; }
+        var days = Math.floor(hours / 24);
+        el.textContent = czechAgo(days, 'dnem', 'dny', 'dny');
+      }
+
+      render();
+      setInterval(render, 60000);
     })();
   </script>
 
