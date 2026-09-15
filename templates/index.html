@@ -138,9 +138,6 @@
         {% if last_update %}
           <span>Aktualizováno {{ last_update }}</span>
         {% endif %}
-        {% if next_refresh %}
-          <span>Další aktualizace {{ next_refresh }}</span>
-        {% endif %}
       </div>
     </div>
   </header>
@@ -324,5 +321,20 @@
       }
     })();
   </script>
+
+  {% if public_deploy %}
+  <script>
+    // Production only: silently reload once a background scrape writes fresh data.
+    (function () {
+      var baseline = "{{ jobs_mtime }}";
+      setInterval(function () {
+        fetch('/last-update')
+          .then(function (r) { return r.text(); })
+          .then(function (t) { if (t && t !== baseline) location.reload(); })
+          .catch(function () {});
+      }, 5000);
+    })();
+  </script>
+  {% endif %}
 </body>
 </html>

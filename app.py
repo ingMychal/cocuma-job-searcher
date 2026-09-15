@@ -97,23 +97,6 @@ def _last_update_iso(data_dir: str) -> str | None:
     return datetime.fromtimestamp(mtime).strftime("%d. %m. %Y, %H:%M")
 
 
-def _next_refresh_text(data_dir: str) -> str:
-    """Return Czech text like 'za 25 min.' until the next auto-refresh."""
-    mtime = _jobs_mtime(data_dir)
-    remaining = STALE_SECONDS - (time.time() - mtime) if mtime is not None else 0
-    if remaining <= 0:
-        return "probíhá nyní"
-    hours = int(remaining // 3600)
-    minutes = int((remaining % 3600) // 60)
-    if hours and minutes:
-        return f"za {hours} hod. {minutes} min."
-    if hours:
-        return f"za {hours} hod."
-    if minutes:
-        return f"za {minutes} min."
-    return "probíhá nyní"
-
-
 # --- Routes ---
 
 
@@ -124,13 +107,12 @@ def index():
     # All jobs go to the page; filtering happens live in the browser as the user types.
     jobs = load_jobs(DATA_DIR)
     last_update = _last_update_iso(DATA_DIR)
-    next_refresh = _next_refresh_text(DATA_DIR) if PUBLIC_DEPLOY else None
     return render_template(
         "index.html",
         jobs=jobs,
         query=q,
         last_update=last_update,
-        next_refresh=next_refresh,
+        jobs_mtime=_jobs_mtime(DATA_DIR) or 0,
         public_deploy=PUBLIC_DEPLOY,
     )
 
@@ -151,6 +133,12 @@ def refresh():
             render_template("error.html", message="Nepodařilo se načíst příležitosti. Zkuste to později."),
             502,
         )
+
+
+@app.route("/last-update")
+def last_update():
+    """Lightweight endpoint the page polls to detect a finished background scrape."""
+    return Response(str(_jobs_mtime(DATA_DIR) or 0), mimetype="text/plain")
 
 
 @app.route("/robots.txt")
