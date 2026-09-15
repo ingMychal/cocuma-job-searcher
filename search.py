@@ -1,13 +1,20 @@
 """
 Local search over jobs: matches only job title OR company name (never description).
 Multi-word queries use AND: each word must appear in title or company. Case-insensitive.
+Diacritic-insensitive: "vyvojar" matches "Vývojář" (Czech users often omit diacritics).
 """
+
+import unicodedata
 
 
 def _normalize(s: str) -> str:
     if not s:
         return ""
-    return " ".join(str(s).lower().split())
+    # Fold diacritics: decompose (NFKD) then drop combining marks, so
+    # "Vývojář" -> "vyvojar". Applied to both the query and job fields.
+    folded = unicodedata.normalize("NFKD", str(s))
+    folded = "".join(c for c in folded if not unicodedata.combining(c))
+    return " ".join(folded.lower().split())
 
 
 def _words(query: str) -> list[str]:
